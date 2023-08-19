@@ -1,7 +1,6 @@
 <?php
 
 namespace Signal;
-use Closure;
 
 declare(ticks = 1);
 pcntl_async_signals(true);
@@ -28,12 +27,12 @@ class PosixSignalHandler {
 
     $handler = self::$handlers[$signalValue]["handler"];
     $params = self::$handlers[$signalValue]["params"];
-    $handler($params);
+    call_user_func($handler, $params);
 
   }
 
   /**
-   * Check if a signal has been registered with a valid Closure handler.
+   * Check if a signal has been registered with a valid callable handler.
    *
    * @param PosixSignal|int $signal The PosixSignal instance or integer value.
    * @return bool True if the signal is registered with a valid handler, False otherwise.
@@ -42,7 +41,7 @@ class PosixSignalHandler {
 
     $signalValue = self::getSignalValue($signal);
     if (isset(self::$handlers[$signalValue])) {
-      if (self::$handlers[$signalValue]["handler"] instanceof Closure) {
+      if (is_callable(self::$handlers[$signalValue]["handler"])) {
         return true;
       }
     }
@@ -54,11 +53,11 @@ class PosixSignalHandler {
    * Register a signal handler for the specified signal.
    *
    * @param PosixSignal|int $signal The PosixSignal instance or integer value.
-   * @param Closure $handler The handler function to be associated with the signal.
-   * @param Array $params Optional parameters to be passed to the handler function when called.
+   * @param Callable $handler The handler function to be associated with the signal.
+   * @param Mixed[] $params Optional parameters to be passed to the handler function when called.
    * @return bool True if the signal handler was successfully registered, False otherwise.
    */
-  public static function register(PosixSignal|int $signal, Closure $handler, Array $params = []): bool {
+  public static function register(PosixSignal|int $signal, Callable $handler, Array $params = []): bool {
 
     $signalValue = self::getSignalValue($signal);
     if (self::isRegistered($signalValue)) {
