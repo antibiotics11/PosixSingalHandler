@@ -4,23 +4,23 @@ namespace Signal;
 
 enum PosixSignal: int {
 
-  case SIGHUP  = SIGHUP;   // Hangup signal
-  case SIGINT  = SIGINT;   // Interrupt signal
-  case SIGQUIT = SIGQUIT;  // Quit signal
-  case SIGILL  = SIGILL;   // Illegal instruction signal
-  case SIGABRT = SIGABRT;  // Abort signal
-  case SIGKILL = SIGKILL;  // Kill signal
-  case SIGSEGV = SIGSEGV;  // Segmentation violation signal
-  case SIGPIPE = SIGPIPE;  // Broken pipe signal
-  case SIGALRM = SIGALRM;  // Alarm signal
-  case SIGTERM = SIGTERM;  // Termination signal
-  case SIGUSR1 = SIGUSR1;  // User-defined signal 1
-  case SIGUSR2 = SIGUSR2;  // User-defined signal 2
-  case SIGCHLD = SIGCHLD;  // Child process status changed signal
-  case SIGCONT = SIGCONT;  // Continue signal
-  case SIGSTOP = SIGSTOP;  // Stop signal
-  case SIGTSTP = SIGTSTP;  // Terminal stop signal
-  case SIGTTIN = SIGTTIN;  // Terminal input signal
-  case SIGTTOU = SIGTTOU;  // Terminal output signal
+  case SIGHUP  = 1;   // Hangup signal
+  case SIGINT  = 2;   // Interrupt signal
+  case SIGQUIT = 3;   // Quit signal
+  case SIGILL  = 4;   // Illegal instruction signal
+  case SIGABRT = 6;   // Abort signal
+  case SIGKILL = 9;   // Kill signal
+  case SIGSEGV = 11;  // Segmentation violation signal
+  case SIGPIPE = 13;  // Broken pipe signal
+  case SIGALRM = 14;  // Alarm signal
+  case SIGTERM = 15;  // Termination signal
+  case SIGUSR1 = 10;  // User-defined signal 1
+  case SIGUSR2 = 12;  // User-defined signal 2
+  case SIGCHLD = 17;  // Child process status changed signal
+  case SIGCONT = 18;  // Continue signal
+  case SIGSTOP = 19;  // Stop signal
+  case SIGTSTP = 20;  // Terminal stop signal
+  case SIGTTIN = 21;  // Terminal input signal
+  case SIGTTOU = 22;  // Terminal output signal
 
 };
