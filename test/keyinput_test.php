@@ -3,7 +3,6 @@
 
 require_once "../src/PosixSignal.php";
 require_once "../src/PosixSignalHandler.php";
-use Signal\{PosixSignal, PosixSignalHandler};
 
 // Register the handler for the SIGTSTP (Ctrl+Z) signal.
 PosixSignalHandler::register(PosixSignal::SIGTSTP, function() {

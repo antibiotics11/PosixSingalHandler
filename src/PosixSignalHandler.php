@@ -1,13 +1,10 @@
 <?php
 
-namespace Signal;
-
 declare(ticks = 1);
 pcntl_async_signals(true);
 
 class PosixSignalHandler {
 
-  private static Array $handlers = [];
 
   private static function getSignalValue(PosixSignal|int $signal): int {
     return ($signal instanceof PosixSignal) ? $signal->value : $signal;
@@ -90,4 +87,4 @@ class PosixSignalHandler {
 
   }
 
-};
+}

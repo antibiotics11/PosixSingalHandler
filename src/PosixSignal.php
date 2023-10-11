@@ -1,7 +1,5 @@
 <?php
 
-namespace Signal;
-
 enum PosixSignal: int {
 
   case SIGHUP  = 1;   // Hangup signal
@@ -23,4 +21,4 @@ enum PosixSignal: int {
   case SIGTTIN = 21;  // Terminal input signal
   case SIGTTOU = 22;  // Terminal output signal
 
-};
+}
