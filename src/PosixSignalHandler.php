@@ -167,7 +167,7 @@ class PosixSignalHandler {
   }
 
   #[JetBrains\PhpStorm\Deprecated(
-    reason: "Use addSignal() instead.",
+    reason: "Use addHandler() instead.",
     replacement: "%class%::addHandler(%parameter0%,%parameter1%,%parameter2%,%parameter3%)"
   )]
   public static function register(PosixSignal|int $signal, callable $handler, array $params = [], int $order = -1): int|false {
@@ -183,7 +183,7 @@ class PosixSignalHandler {
   }
 
   #[JetBrains\PhpStorm\Deprecated(
-    reason: "Use removeSignal() instead.",
+    reason: "Use removeHandler() instead.",
     replacement: "%class%::removeHandler(%parameter0%,%parameter1%)"
   )]
   public static function unregister(PosixSignal|int $signal, int $order = -1): int|false {
