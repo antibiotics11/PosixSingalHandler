@@ -5,86 +5,189 @@ pcntl_async_signals(true);
 
 class PosixSignalHandler {
 
+  protected static array $handlers = [];
 
-  private static function getSignalValue(PosixSignal|int $signal): int {
+  protected static function getSignalValue(PosixSignal|int $signal): int {
     return ($signal instanceof PosixSignal) ? $signal->value : $signal;
   }
 
   /**
-   * Call the handler function associated with the specified signal.
+   * Handles the specified signal by invoking registered handlers.
    *
-   * @param PosixSignal|int $signal The PosixSignal instance or integer value.
+   * @param PosixSignal|int $signal The signal to handle.
+   * @return void
    */
-  public static function handleSignal(PosixSignal|int $signal): void {
+  public static function handle(PosixSignal|int $signal): void {
 
     $signalValue = self::getSignalValue($signal);
-    if (!self::isRegistered($signalValue)) {
+    if (!self::handlerExists($signalValue)) {
       return;
     }
 
-    $handler = self::$handlers[$signalValue]["handler"];
-    $params = self::$handlers[$signalValue]["params"];
-    call_user_func($handler, $params);
+    foreach (self::$handlers[$signalValue] as $handler) {
+      try {
+        call_user_func($handler["handler"], $handler["args"]);
+      } catch (Throwable $e) {
+        trigger_error($e->getMessage(), E_USER_WARNING);
+      }
+    }
 
   }
 
   /**
-   * Check if a signal has been registered with a valid callable handler.
+   * Adds a handler for the specified signal.
    *
-   * @param PosixSignal|int $signal The PosixSignal instance or integer value.
-   * @return bool True if the signal is registered with a valid handler, False otherwise.
+   * @param PosixSignal|int $signal The signal to add a handler for.
+   * @param callable $handler The handler function to be invoked.
+   * @param array $args Additional arguments to be passed to the handler.
+   * @param int|null $order The order in which the handler should be executed.
+   * @return int|false The order of the added handler or false on failure.
    */
-  public static function isRegistered(PosixSignal|int $signal): bool {
+  public static function addHandler(PosixSignal|int $signal, callable $handler, array $args = [], ?int $order = null): int|false {
 
     $signalValue = self::getSignalValue($signal);
-    if (isset(self::$handlers[$signalValue])) {
-      if (is_callable(self::$handlers[$signalValue]["handler"])) {
+    if (!isset(self::$handlers[$signalValue])) {
+      self::$handlers[$signalValue] = [];
+    }
+
+    $order = $order ?? array_key_last(self::$handlers[$signalValue]) ?? -1;
+    $order++;
+
+    self::$handlers[$signalValue][$order] = [
+      "handler" => $handler,
+      "args"    => $args
+    ];
+
+    if (!pcntl_signal($signalValue, [ self::class, "handle" ])) {
+      return false;
+    }
+    return $order;
+
+  }
+
+  /**
+   * Checks if a handler is registered for the specified signal and order.
+   *
+   * @param PosixSignal|int $signal The signal to check.
+   * @param int|null $order The order of the handler to check.
+   * @return bool True if the handler exists, false otherwise.
+   */
+  public static function handlerExists(PosixSignal|int $signal, ?int $order = null): bool {
+
+    $signalValue = self::getSignalValue($signal);
+    if (!isset(self::$handlers[$signalValue])) {
+      return false;
+    }
+
+    if ($order === null) {
+      return count(self::$handlers[$signalValue]) > 0;
+    }
+
+    if (isset(self::$handlers[$signalValue][$order])) {
+      if (is_callable(self::$handlers[$signalValue][$order]["handler"])) {
         return true;
       }
     }
+
     return false;
 
   }
 
   /**
-   * Register a signal handler for the specified signal.
+   * Removes a handler for the specified signal and order.
    *
-   * @param PosixSignal|int $signal The PosixSignal instance or integer value.
-   * @param Callable $handler The handler function to be associated with the signal.
-   * @param Mixed[] $params Optional parameters to be passed to the handler function when called.
-   * @return bool True if the signal handler was successfully registered, False otherwise.
+   * @param PosixSignal|int $signal The signal to remove a handler from.
+   * @param int|null $order The order of the handler to remove.
+   * @return int|false The order of the removed handler or false on failure.
    */
-  public static function register(PosixSignal|int $signal, Callable $handler, Array $params = []): bool {
+  public static function removeHandler(PosixSignal|int $signal, ?int $order = null): int|false {
 
     $signalValue = self::getSignalValue($signal);
-    if (self::isRegistered($signalValue)) {
-      self::unregister($signalValue);
+
+    $order ??= array_key_last(self::$handlers[$signalValue]);
+    if ($order === null || !self::handlerExists($signalValue, $order)) {
+      return false;
     }
 
-    self::$handlers[$signalValue] = [ 
-      "handler" => $handler, 
-      "params"  => $params 
-    ];
-    return pcntl_signal($signalValue, [ self::class, "handleSignal" ]);
+    unset(self::$handlers[$signalValue][$order]);
+
+    if (count(self::$handlers[$signalValue]) == 0) {
+      unset(self::$handlers[$signalValue]);
+      pcntl_signal($signalValue, SIG_DFL);
+    }
+
+    return $order;
 
   }
 
   /**
-   * Unregister a previously registered signal handler.
+   * Retrieves the handlers for the specified signal.
    *
-   * @param PosixSignal|int $signal The PosixSignal instance or integer value.
-   * @return bool True if the signal handler was successfully unregistered, False otherwise.
+   * @param PosixSignal|int $signal The signal to retrieve handlers for.
+   * @return array|null An array of handlers or null if none are registered.
    */
-  public static function unregister(PosixSignal|int $signal): bool {
+  public static function getHandlers(PosixSignal|int $signal): ?array {
+    return self::$handlers[self::getSignalValue($signal)] ?? null;
+  }
+
+  /**
+   * Clears all handlers for the specified signal.
+   *
+   * @param PosixSignal|int $signal The signal to clear handlers for.
+   * @return void
+   */
+  public static function clearHandlers(PosixSignal|int $signal): void {
 
     $signalValue = self::getSignalValue($signal);
-    if (!self::isRegistered($signalValue)) {
-      return false;
+    self::$handlers[$signalValue] = [];
+    pcntl_signal($signalValue, SIG_DFL);
+
+  }
+
+  /**
+   * Clears all handlers for all signals.
+   *
+   * @return void
+   */
+  public static function clearAllHandlers(): void {
+
+    foreach (self::$handlers as $signalValue => $handlers) {
+      self::clearHandlers($signalValue);
     }
+    self::$handlers = [];
 
-    unset(self::$handlers[$signalValue]);
-    return pcntl_signal($signalValue, SIG_DFL);
+  }
 
+  #[JetBrains\PhpStorm\Deprecated(
+    reason: "Use handle() instead.",
+    replacement: "%class%::handle(%parameter0%)"
+  )]
+  public static function handleSignal(PosixSignal|int $signal): void {
+    self::handle($signal);
+  }
+
+  #[JetBrains\PhpStorm\Deprecated(
+    reason: "Use addSignal() instead.",
+    replacement: "%class%::addHandler(%parameter0%,%parameter1%,%parameter2%,%parameter3%)"
+  )]
+  public static function register(PosixSignal|int $signal, callable $handler, array $params = [], int $order = -1): int|false {
+    return self::addHandler($signal, $handler, $params, $order);
+  }
+
+  #[JetBrains\PhpStorm\Deprecated(
+    reason: "Use handlerExists() instead.",
+    replacement: "%class%::handlerExists(%parameter0%,%parameter1%)"
+  )]
+  public static function isRegistered(PosixSignal|int $signal, int $order = -1): bool {
+    return self::handlerExists($signal, $order);
+  }
+
+  #[JetBrains\PhpStorm\Deprecated(
+    reason: "Use removeSignal() instead.",
+    replacement: "%class%::removeHandler(%parameter0%,%parameter1%)"
+  )]
+  public static function unregister(PosixSignal|int $signal, int $order = -1): int|false {
+    return self::removeHandler($signal, $order);
   }
 
 }
