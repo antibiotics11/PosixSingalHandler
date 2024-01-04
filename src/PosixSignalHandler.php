@@ -3,7 +3,7 @@
 declare(ticks = 1);
 pcntl_async_signals(true);
 
-class PosixSignalHandler {
+final class PosixSignalHandler {
 
   protected static array $handlers = [];
 
@@ -25,11 +25,7 @@ class PosixSignalHandler {
     }
 
     foreach (self::$handlers[$signalValue] as $handler) {
-      try {
-        call_user_func($handler["handler"], $handler["args"]);
-      } catch (Throwable $e) {
-        trigger_error($e->getMessage(), E_USER_WARNING);
-      }
+      call_user_func($handler["handler"], $handler["args"]);
     }
 
   }
@@ -124,10 +120,10 @@ class PosixSignalHandler {
    * Retrieves the handlers for the specified signal.
    *
    * @param PosixSignal|int $signal The signal to retrieve handlers for.
-   * @return array|null An array of handlers or null if none are registered.
+   * @return array An array of handlers or empty array if none are registered.
    */
-  public static function getHandlers(PosixSignal|int $signal): ?array {
-    return self::$handlers[self::getSignalValue($signal)] ?? null;
+  public static function getHandlers(PosixSignal|int $signal): array {
+    return self::$handlers[self::getSignalValue($signal)] ?? [];
   }
 
   /**
@@ -158,36 +154,6 @@ class PosixSignalHandler {
 
   }
 
-  #[JetBrains\PhpStorm\Deprecated(
-    reason: "Use handle() instead.",
-    replacement: "%class%::handle(%parameter0%)"
-  )]
-  public static function handleSignal(PosixSignal|int $signal): void {
-    self::handle($signal);
-  }
-
-  #[JetBrains\PhpStorm\Deprecated(
-    reason: "Use addHandler() instead.",
-    replacement: "%class%::addHandler(%parameter0%,%parameter1%,%parameter2%,%parameter3%)"
-  )]
-  public static function register(PosixSignal|int $signal, callable $handler, array $params = [], int $order = -1): int|false {
-    return self::addHandler($signal, $handler, $params, $order);
-  }
-
-  #[JetBrains\PhpStorm\Deprecated(
-    reason: "Use handlerExists() instead.",
-    replacement: "%class%::handlerExists(%parameter0%,%parameter1%)"
-  )]
-  public static function isRegistered(PosixSignal|int $signal, int $order = -1): bool {
-    return self::handlerExists($signal, $order);
-  }
-
-  #[JetBrains\PhpStorm\Deprecated(
-    reason: "Use removeHandler() instead.",
-    replacement: "%class%::removeHandler(%parameter0%,%parameter1%)"
-  )]
-  public static function unregister(PosixSignal|int $signal, int $order = -1): int|false {
-    return self::removeHandler($signal, $order);
-  }
+  private function __construct() {}
 
 }
