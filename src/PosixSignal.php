@@ -1,5 +1,7 @@
 <?php
 
+namespace antibiotics11\PosixSignalHandler;
+
 enum PosixSignal: int {
 
   /**
