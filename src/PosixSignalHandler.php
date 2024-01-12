@@ -3,7 +3,7 @@
 declare(ticks = 1);
 pcntl_async_signals(true);
 
-final class PosixSignalHandler {
+class PosixSignalHandler {
 
   protected static array $handlers = [];
 
@@ -25,7 +25,7 @@ final class PosixSignalHandler {
     }
 
     foreach (self::$handlers[$signalValue] as $handler) {
-      call_user_func($handler["handler"], $handler["args"]);
+      call_user_func_array($handler["handler"], $handler["args"]);
     }
 
   }
