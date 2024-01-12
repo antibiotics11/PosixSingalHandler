@@ -1,5 +1,14 @@
 <?php
 
+namespace antibiotics11\PosixSignalHandler;
+use function array_key_last;
+use function call_user_func_array;
+use function count;
+use function is_callable;
+use function pcntl_signal;
+use function pcntl_async_signals;
+use const SIG_DFL;
+
 declare(ticks = 1);
 pcntl_async_signals(true);
 
