@@ -1,18 +1,15 @@
-# PosixSignalHandler
+# posix-signal-manager
 
-A utility class for handling POSIX signals in PHP applications.
+A PHP library for POSIX signal handling. 
 
 ```php
-
-use antibiotics11\PosixSignalHandler\PosixSignal;
-use antibiotics11\PosixSignalHandler\PosixSignalHandler;
+use antibiotics11\PosixSignalManager\{Signal, SignalHandler, SignalManager};
 
 // Registering a custom handler for SIGINT (Ctrl+C)
-PosixSignalHandler::addHandler(PosixSignal::SIGINT, function (): void {
+SignalManager::getManager()->addHandler(Signal::SIGINT, new SignalHandler(function (): void {
   printf("Ctrl+C pressed! Exiting...\r\n");
   exit(0);
-});
-
+}));
 ```
 
 ## Requirements
@@ -23,6 +20,6 @@ PosixSignalHandler::addHandler(PosixSignal::SIGINT, function (): void {
 ## Installation
 
 ```shell
-composer require antibiotics11/posix-signal-handler
+composer require antibiotics11/posix-signal-manager
 ```
 
