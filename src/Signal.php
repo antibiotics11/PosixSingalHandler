@@ -1,8 +1,8 @@
 <?php
 
-namespace antibiotics11\PosixSignalHandler;
+namespace antibiotics11\PosixSignalManager;
 
-enum PosixSignal: int {
+enum Signal: int {
 
   /**
    * Hangup signal (SIGHUP)
