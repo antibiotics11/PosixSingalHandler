@@ -3,7 +3,7 @@
 namespace antibiotics11\PosixSignalManager;
 use InvalidArgumentException;
 use RuntimeException;
-use function pcntl_async_signals, pcntl_signal, pcntl_signal_get_handler;
+use function pcntl_async_signals, pcntl_signal, pcntl_signal_get_handler, pcntl_alarm;
 use function count, in_array, array_values, array_key_last;
 use const SIG_DFL;
 
@@ -41,13 +41,11 @@ class SignalManager {
    * @return bool
    */
   public function hasHandler(Signal $signal, ?SignalHandler $handler = null): bool {
-
     if (!isset($this->handlers[$signal->value]) || count($this->handlers[$signal->value]) < 1) {
       return false;
     }
 
     return $handler === null || in_array($handler, $this->handlers[$signal->value]);
-
   }
 
   /**
@@ -58,7 +56,6 @@ class SignalManager {
    * @throws InvalidArgumentException if an undefined signal is provided.
    */
   public function handle(Signal|int $signal): void {
-
     if (!($signal instanceof Signal)) {
       $signalInstance = Signal::tryFrom($signal);
       if ($signalInstance === null) {
@@ -74,7 +71,6 @@ class SignalManager {
     foreach ($this->handlers[$signal->value] as $handler) {
       $handler->execute();
     }
-
   }
 
   /**
@@ -87,7 +83,6 @@ class SignalManager {
    * @throws InvalidArgumentException if the handler already exists.
    */
   public function addHandler(Signal $signal, SignalHandler $handler): void {
-
     $this->handlers[$signal->value] ??= [];
 
     if (pcntl_signal_get_handler($signal->value) == SIG_DFL) {
@@ -99,7 +94,6 @@ class SignalManager {
     }
 
     $this->handlers[$signal->value][] = $handler;
-
   }
 
   /**
@@ -122,7 +116,6 @@ class SignalManager {
    * @throws RuntimeException if unregistering the signal handler fails.
    */
   public function removeHandler(Signal $signal, ?SignalHandler $handler = null): void {
-
     if (!$this->hasHandler($signal)) {
       return;
     }
@@ -150,7 +143,6 @@ class SignalManager {
     if (count($this->handlers[$signal->value]) < 1) {
       $this->removeHandlers($signal);
     }
-
   }
 
   /**
@@ -161,14 +153,22 @@ class SignalManager {
    * @throws RuntimeException if unregistering the signal handler fails.
    */
   public function removeHandlers(Signal $signal): void {
-
     // Reset the signal handler to its default behavior
     $this->registerSignalFunction($signal);
 
     if (isset($this->handlers[$signal->value])) {
       unset($this->handlers[$signal->value]);
     }
+  }
 
+  /**
+   * Set an alarm to trigger a SIGALRM signal after a specified number of seconds.
+   *
+   * @param int $seconds
+   * @return int
+   */
+  public function setAlarm(int $seconds): int {
+    return pcntl_alarm($seconds);
   }
 
   private function __construct() {}
